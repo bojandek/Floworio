@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 import uvicorn
 import os
 
-from routers import upload, story, tts, render, publish
+from routers import upload, story, tts, render, publish, templates, templates_advanced
 
 app = FastAPI(
     title="Floworio API",
@@ -45,6 +45,8 @@ app.include_router(story.router, prefix="/api/story", tags=["Story"])
 app.include_router(tts.router, prefix="/api/tts", tags=["TTS"])
 app.include_router(render.router, prefix="/api/render", tags=["Render"])
 app.include_router(publish.router, prefix="/api/publish", tags=["Publish"])
+app.include_router(templates.router, tags=["Templates"])
+app.include_router(templates_advanced.router, tags=["Advanced Templates"])
 
 
 @app.get("/")
