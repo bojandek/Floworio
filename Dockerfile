@@ -8,7 +8,7 @@ WORKDIR /app
 COPY floworio/apps/web/package*.json ./
 
 # Instaliraj zavisnosti
-RUN npm ci
+RUN npm install
 
 # Kopiraj source kod
 COPY floworio/apps/web/ .
