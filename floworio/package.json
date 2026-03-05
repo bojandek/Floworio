@@ -1,0 +1,23 @@
+{
+  "name": "floworio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Floworio - Data Story SaaS Platform. Upload Excel → AI Story → Remotion Video → Social Media",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "web": "cd apps/web && npm run dev",
+    "api": "cd apps/api && uvicorn main:app --reload --port 8000"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
