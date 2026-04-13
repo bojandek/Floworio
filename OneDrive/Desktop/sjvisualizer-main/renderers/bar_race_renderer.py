@@ -64,11 +64,14 @@ def _setup_center_recording(canvas: Canvas.canvas, target_width: int = 1080, tar
 
             capture_video = cv2.VideoWriter(file_name, fourc, fps, (target_width, target_height))
 
-            print(f"SNIMANJE CENTRALNOG DIJELA:")
-            print(f"Screen: {screen_width}x{screen_height}")
-            print(
-                f"Recording area: ({center_x}, {center_y}) to ({center_x + target_width}, {center_y + target_height})"
-            )
+            try:
+                print(f"SNIMANJE CENTRALNOG DIJELA:")
+                print(f"Screen: {screen_width}x{screen_height}")
+                print(
+                    f"Recording area: ({center_x}, {center_y}) to ({center_x + target_width}, {center_y + target_height})"
+                )
+            except OSError:
+                pass
 
         canvas._add_sj_logo()
 
@@ -103,7 +106,10 @@ def _setup_center_recording(canvas: Canvas.canvas, target_width: int = 1080, tar
                 time.sleep(0.0001)
 
             time_used = time.time() - start
-            print("FPS: {}".format(format(1 / time_used, ",.2f")))
+            try:
+                print(f"FPS: {1 / time_used:.2f}")
+            except OSError:
+                pass  # Skip printing if output stream is unavailable
 
         if record:
             if canvas.frames:
@@ -115,7 +121,10 @@ def _setup_center_recording(canvas: Canvas.canvas, target_width: int = 1080, tar
             time.sleep(1)
             canvas.tk.destroy()
             cv2.destroyAllWindows()
-            print(f"Video snimljen: {file_name}")
+            try:
+                print(f"Video snimljen: {file_name}")
+            except OSError:
+                pass
 
     canvas.play = center_play
 
@@ -123,7 +132,9 @@ def _setup_center_recording(canvas: Canvas.canvas, target_width: int = 1080, tar
 def _clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Convert all columns (except the first) to numeric and fill NaNs with 0."""
     for col in df.columns[1:]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+        if not pd.api.types.is_numeric_dtype(df[col]):
+            # Handle non-numeric columns (e.g., convert to 0 or skip)
+            df[col] = pd.to_numeric(df[col], errors='coerce')
     df_clean = df.dropna(how="all", subset=df.columns[1:])
     return df_clean.fillna(0)
 

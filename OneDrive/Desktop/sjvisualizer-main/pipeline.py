@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
+import pandas as pd
 
 # Setup logging
 log_dir = Path("logs")
@@ -55,11 +56,32 @@ def run_pipeline(config: Optional[Dict[str, Any]] = None, dry_run: bool = False)
             logger.warning("[2/7] Skipping video rendering in dry-run mode.")
             video_path = Path("output/dry_run_video.mp4")
 
-        # STEP 3: Voiceover
-        logger.info("[3/7] Generating voiceover...")
+        # STEP 3: Voiceover - Generate script from data first, then generate audio
+        logger.info("[3/7] Generating voiceover script from data...")
+        from voice_script_generator import generate_voice_script
+        from chart_router import render_chart
+
+        # Render chart to get data (without saving to file, just to get data)
+        df_handler = None
+        try:
+            from sjvisualizer import DataHandler
+            excel_file = config.get('excel_file', 'sjvisualizer-main/sjvisualizer-main/Examples/Data/FAOSTAT.xlsx')
+            # Create a simple handler to get data
+            df = DataHandler.DataHandler(excel_file=excel_file, number_of_frames=50).df
+            for col in df.columns[1:]:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+            df = df.dropna(how='all', subset=df.columns[1:]).fillna(0)
+            voice_script = generate_voice_script(config, df)
+        except Exception as e:
+            logger.warning(f"Could not generate voice script from data: {e}")
+            voice_script = config.get('subtitle', 'Data visualization')
+
+        logger.info(f"Generated voice script: {voice_script[:100]}...")
+
+        logger.info("[3/7] Generating voiceover audio...")
         from voice_generator import generate_voiceover
         voice_config = {
-            'text': config.get('subtitle', 'Data visualization'),
+            'text': voice_script,
             'language': config.get('language', 'en'),
             'voice': config.get('voice', 'en-US-AriaNeural'),
             'output_path': 'audio/narration.mp3'
@@ -127,10 +149,34 @@ def run_pipeline(config: Optional[Dict[str, Any]] = None, dry_run: bool = False)
 
 
 def _stub_upload(video_path: Path) -> None:
-    """Placeholder for YouTube upload functionality."""
-    logger.info(f"[STUB] Would upload {video_path} to YouTube")
-    # TODO: Implement YouTube upload using google-api-python-client
-    pass
+    """Upload video to YouTube using configured credentials."""
+    try:
+        from youtube_upload import upload_video
+        from config.settings import YOUTUBE_PRIVACY_STATUS
+
+        title = "Data Visualization Video"
+        description = "Automatically generated data visualization video"
+        privacy_status = YOUTUBE_PRIVACY_STATUS
+
+        logger.info(f"Uploading to YouTube...")
+        video_id = upload_video(
+            video_path=video_path,
+            title=title,
+            description=description,
+            privacy_status=privacy_status
+        )
+
+        if video_id:
+            logger.info(f"YouTube upload successful! Video ID: {video_id}")
+            # Save video ID for reference
+            with open("output/last_upload.txt", "w") as f:
+                f.write(f"Video ID: {video_id}\n")
+                f.write(f"URL: https://youtu.be/{video_id}\n")
+            logger.info(f"Upload info saved to output/last_upload.txt")
+        else:
+            logger.warning("YouTube upload failed or was skipped (no credentials)")
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
 
 
 def _stub_notify(video_path: Path) -> None:
@@ -151,4 +197,4 @@ if __name__ == '__main__':
         'duration': 0.55,
         'record': True
     }
-    run_pipeline(test_config, dry_run=True)
+    run_pipeline(test_config, dry_run=False)

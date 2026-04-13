@@ -23,6 +23,15 @@ ANTHROPIC_API_KEY = "YOUR_KEY"
 # Freesound (background music)
 FREESOUND_API_KEY = "YOUR_KEY"
 
+# FFmpeg path (required for audio mixing)
+# Auto-detected from imageio_ffmpeg if available, otherwise set manually:
+# FFMPEG_PATH = "C:/Users/LENOVO/AppData/Roaming/Python/Python313/site-packages/imageio_ffmpeg/binaries/ffmpeg-win-x86_64-v7.1.exe"
+FFMPEG_PATH = ""  # Leave empty if ffmpeg is in PATH, otherwise specify full path
+FFPROBE_PATH = ""  # Leave empty if ffprobe is in PATH, otherwise specify full path
+
+# YouTube for music (when Freesound key not available)
+USE_YOUTUBE_MUSIC = True   # Set to False to disable YouTube music search
+
 # YouTube
 YOUTUBE_CLIENT_SECRETS_FILE = "youtube_client_secrets.json"
 YOUTUBE_TOKEN_FILE          = "youtube_token.json"
